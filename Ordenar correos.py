@@ -1,18 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
 import csv
 import openpyxl
+from PyPDF2 import PdfFileReader
+
+# Inicializar la lista de datos combinados
+datos_combinados = []
 
 # Función para cargar datos desde un archivo CSV o Excel
 def cargar_datos(desde_excel=False):
     try:
         if desde_excel:
+            datos = []
             libro_excel = openpyxl.load_workbook('datos.xlsx')
             hoja_excel = libro_excel.active
-            datos = [(fila[0].value, fila[1].value) for fila in hoja_excel.iter_rows(values_only=True)]
+            for fila in hoja_excel.iter_rows(values_only=True):
+                datos.append(tuple(fila))
         else:
-            with open('datos.csv', newline='') as archivo:
+            with open('datos.csv', newline='', encoding='utf-8') as archivo:
                 lector_csv = csv.reader(archivo)
                 datos = list(lector_csv)
         return datos
@@ -21,16 +28,19 @@ def cargar_datos(desde_excel=False):
 
 # Función para guardar datos en un archivo CSV o Excel
 def guardar_datos(datos, a_excel=False):
-    if a_excel:
-        libro_excel = openpyxl.Workbook()
-        hoja_excel = libro_excel.active
-        for dato in datos:
-            hoja_excel.append(dato)
-        libro_excel.save('datos.xlsx')
-    else:
-        with open('datos.csv', 'w', newline='') as archivo:
-            escritor_csv = csv.writer(archivo)
-            escritor_csv.writerows(datos)
+    try:
+        if a_excel:
+            libro_excel = openpyxl.Workbook()
+            hoja_excel = libro_excel.active
+            for dato in datos:
+                hoja_excel.append(dato)
+            libro_excel.save('datos.xlsx')
+        else:
+            with open('datos.csv', 'w', newline='', encoding='utf-8') as archivo:
+                escritor_csv = csv.writer(archivo)
+                escritor_csv.writerows(datos)
+    except Exception as e:
+        messagebox.showerror("Error", f"Error al guardar datos: {e}")
 
 # Función para mostrar mensajes de confirmación
 def mostrar_mensaje(titulo, mensaje):
@@ -117,8 +127,13 @@ def mostrar_resultado_inicial():
     mostrar_resultado(datos_combinados)
 
 # Función para ordenar los datos alfabéticamente por nombre
-def ordenar():
+def ordenar_por_nombre():
     datos_combinados_ordenados = sorted(datos_combinados, key=lambda x: x[0])
+    mostrar_resultado(datos_combinados_ordenados)
+
+# Función para ordenar los datos alfabéticamente por correo electrónico
+def ordenar_por_correo():
+    datos_combinados_ordenados = sorted(datos_combinados, key=lambda x: x[1])
     mostrar_resultado(datos_combinados_ordenados)
 
 # Función para deshacer el orden y mostrar los datos originales
@@ -138,6 +153,26 @@ def agregar_dato():
     else:
         mostrar_mensaje("Error", "Por favor, ingrese nuevo nombre y dirección de correo electrónico.")
 
+# Función para abrir archivos PDF y Excel
+def abrir_archivo():
+    archivo = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Excel files", "*.xlsx;*.xls")])
+    if archivo:
+        if archivo.endswith('.pdf'):
+            try:
+                with open(archivo, 'rb') as pdf_file:
+                    pdf_reader = PdfFileReader(pdf_file)
+                    num_paginas = pdf_reader.numPages
+                mostrar_mensaje("Información", f"Se abrió el archivo PDF: {archivo}\nNúmero de páginas: {num_paginas}")
+            except Exception as e:
+                mostrar_mensaje("Error", f"No se pudo abrir el archivo PDF: {e}")
+        elif archivo.endswith(('.xlsx', '.xls')):
+            try:
+                libro_excel = openpyxl.load_workbook(archivo)
+                hojas_excel = libro_excel.sheetnames
+                mostrar_mensaje("Información", f"Se abrió el archivo Excel: {archivo}\nHojas disponibles: {hojas_excel}")
+            except Exception as e:
+                mostrar_mensaje("Error", f"No se pudo abrir el archivo Excel: {e}")
+
 # Crear la ventana principal
 ventana = tk.Tk()
 ventana.title("Gestión de Nombres y Correos Electrónicos")
@@ -148,8 +183,10 @@ estilo.configure("TButton", padding=5, font=('Helvetica', 10))
 
 # Botones
 boton_mostrar_todo = ttk.Button(ventana, text="Mostrar Todo", command=mostrar_resultado_inicial)
-boton_ordenar = ttk.Button(ventana, text="Ordenar", command=ordenar)
+boton_ordenar_correo = ttk.Button(ventana, text="Ordenar por Correo", command=ordenar_por_correo)
+boton_ordenar_nombre = ttk.Button(ventana, text="Ordenar por Nombre", command=ordenar_por_nombre)
 boton_deshacer = ttk.Button(ventana, text="Deshacer Orden", command=deshacer_orden)
+boton_abrir_archivo = ttk.Button(ventana, text="Abrir Archivo", command=abrir_archivo)
 boton_agregar = ttk.Button(ventana, text="Agregar Dato", command=agregar_dato)
 boton_eliminar = ttk.Button(ventana, text="Eliminar Seleccionado", command=eliminar_elemento)
 boton_editar = ttk.Button(ventana, text="Editar Seleccionado", command=editar_elemento)
@@ -170,12 +207,14 @@ resultado.config(yscrollcommand=scrollbar.set)
 
 # Colocar widgets en la ventana
 boton_mostrar_todo.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-boton_ordenar.grid(row=0, column=1, padx=10, pady=5)
-boton_deshacer.grid(row=0, column=2, padx=10, pady=5)
+boton_ordenar_correo.grid(row=0, column=1, padx=10, pady=5)
+boton_ordenar_nombre.grid(row=0, column=2, padx=10, pady=5)
+boton_deshacer.grid(row=0, column=3, padx=10, pady=5)
+boton_abrir_archivo.grid(row=0, column=4, padx=10, pady=5)
 boton_eliminar.grid(row=5, column=0, padx=10, pady=5, sticky="w")
 boton_editar.grid(row=5, column=1, padx=10, pady=5)
-resultado.grid(row=1, column=0, columnspan=3, padx=10, pady=10, sticky="w")
-scrollbar.grid(row=1, column=3, pady=10, sticky="ns")
+resultado.grid(row=1, column=0, columnspan=5, padx=10, pady=10, sticky="w")
+scrollbar.grid(row=1, column=5, pady=10, sticky="ns")
 nombre_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 correo_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
 nombre_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")

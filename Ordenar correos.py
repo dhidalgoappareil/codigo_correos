@@ -181,13 +181,16 @@ ventana.title("Gestión de Nombres y Correos Electrónicos")
 estilo = ttk.Style()
 estilo.configure("TButton", padding=5, font=('Helvetica', 10))
 
+# Estilo ttk para el cuadro de texto
+estilo_texto = ttk.Style()
+estilo_texto.configure("TText", wrap="word")
+
 # Botones
 boton_mostrar_todo = ttk.Button(ventana, text="Mostrar Todo", command=mostrar_resultado_inicial)
 boton_ordenar_correo = ttk.Button(ventana, text="Ordenar por Correo", command=ordenar_por_correo)
 boton_ordenar_nombre = ttk.Button(ventana, text="Ordenar por Nombre", command=ordenar_por_nombre)
 boton_deshacer = ttk.Button(ventana, text="Deshacer Orden", command=deshacer_orden)
 boton_abrir_archivo = ttk.Button(ventana, text="Abrir Archivo", command=abrir_archivo)
-boton_agregar = ttk.Button(ventana, text="Agregar Dato", command=agregar_dato)
 boton_eliminar = ttk.Button(ventana, text="Eliminar Seleccionado", command=eliminar_elemento)
 boton_editar = ttk.Button(ventana, text="Editar Seleccionado", command=editar_elemento)
 
@@ -197,13 +200,17 @@ correo_label = ttk.Label(ventana, text="Correo Electrónico:")
 nombre_entry = ttk.Entry(ventana)
 correo_entry = ttk.Entry(ventana)
 
+# Botón agregar
+boton_agregar = ttk.Button(ventana, text="Agregar Dato", command=agregar_dato)
+
 # Cuadro de texto para mostrar resultados
-resultado = tk.Text(ventana, height=10, width=40)
-resultado.config(state=tk.DISABLED)
+resultado = tk.Text(ventana, height=10, width=40, state=tk.DISABLED, font=('Helvetica', 10))
+resultado.grid(row=1, column=0, columnspan=5, padx=10, pady=10, sticky="w")
 
 # Scrollbar para el cuadro de texto
 scrollbar = tk.Scrollbar(ventana, orient="vertical", command=resultado.yview)
 resultado.config(yscrollcommand=scrollbar.set)
+scrollbar.grid(row=1, column=5, pady=10, sticky="ns")
 
 # Colocar widgets en la ventana
 boton_mostrar_todo.grid(row=0, column=0, padx=10, pady=5, sticky="w")
@@ -213,8 +220,6 @@ boton_deshacer.grid(row=0, column=3, padx=10, pady=5)
 boton_abrir_archivo.grid(row=0, column=4, padx=10, pady=5)
 boton_eliminar.grid(row=5, column=0, padx=10, pady=5, sticky="w")
 boton_editar.grid(row=5, column=1, padx=10, pady=5)
-resultado.grid(row=1, column=0, columnspan=5, padx=10, pady=10, sticky="w")
-scrollbar.grid(row=1, column=5, pady=10, sticky="ns")
 nombre_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 correo_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
 nombre_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
